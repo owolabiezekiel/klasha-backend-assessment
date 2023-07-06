@@ -1,14 +1,18 @@
 package com.example.klashabackendassessment.service.concretes;
 
+import static com.example.klashabackendassessment.utils.Constants.*;
 import static com.example.klashabackendassessment.utils.StringUtils.capitalizeFirstCharacter;
+import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
+import com.example.klashabackendassessment.app.enums.Currency;
 import com.example.klashabackendassessment.config.APIConfiguration;
 import com.example.klashabackendassessment.exceptions.AssessmentException;
 import com.example.klashabackendassessment.model.request.CountryRequest;
 import com.example.klashabackendassessment.model.request.CountryStateRequest;
+import com.example.klashabackendassessment.model.request.CurrencyConvertRequest;
 import com.example.klashabackendassessment.model.response.capital.CountryCapitalResponseData;
 import com.example.klashabackendassessment.model.response.capital.CountryCapitalResponseModel;
 import com.example.klashabackendassessment.model.response.countrycurrency.CountryCurrencyData;
@@ -20,6 +24,7 @@ import com.example.klashabackendassessment.model.response.countrylocation.Countr
 import com.example.klashabackendassessment.model.response.countrypopulation.CountryPopulationResponse;
 import com.example.klashabackendassessment.model.response.countrypopulation.PopulationCount;
 import com.example.klashabackendassessment.model.response.countrystates.*;
+import com.example.klashabackendassessment.model.response.currencyconvert.CurrencyConvertResponse;
 import com.example.klashabackendassessment.service.abstracts.PlacesService;
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +86,68 @@ public class CountriesNowPlacesService implements PlacesService {
   @Async
   public CompletableFuture<CountryStateResponseData> getCountryStateAndCities(String country) {
     return supplyAsync(() -> getStateAndCities(country));
+  }
+
+  @Override
+  public CompletableFuture<CurrencyConvertResponse> convertMoneyToTargetCurrency(
+      CurrencyConvertRequest request) {
+    return supplyAsync(
+        () -> {
+          String countryCurrency = getCountryCurrency(request.getCountry()).getCurrency();
+          return CurrencyConvertResponse.builder()
+              .country(request.getCountry())
+              .localCurrency(convertStringToCurrency(countryCurrency))
+              .amount(request.getAmount())
+              .targetCurrency(request.getTargetCurrency())
+              .convertedAmountValue(
+                  convertMoney(request.getAmount(), countryCurrency, request.getTargetCurrency()))
+              .build();
+        });
+  }
+
+  private Double convertMoney(Double amount, String sourceCurrency, Currency targetCurrency) {
+    if (sourceCurrency.equalsIgnoreCase(targetCurrency.toString())) {
+      return amount;
+    } else {
+      switch (targetCurrency) {
+        case NGN:
+          return calculateExchangeToNGN(sourceCurrency, amount);
+        case UGX:
+          return calculateExchangeToUGX(sourceCurrency, amount);
+        default:
+          throw new AssessmentException(format("Invalid target currency - %s", targetCurrency));
+      }
+    }
+  }
+
+  private Double calculateExchangeToNGN(String sourceCurrency, Double amount) {
+    switch (Currency.valueOf(sourceCurrency)) {
+      case EUR:
+        return EUR_TO_NGN * amount;
+      case USD:
+        return USD_TO_NGN * amount;
+      case JPY:
+        return JPY_TO_NGN * amount;
+      case GBP:
+        return GBP_TO_NGN * amount;
+      default:
+        throw new AssessmentException(format("Cannot convert %s", sourceCurrency));
+    }
+  }
+
+  private Double calculateExchangeToUGX(String sourceCurrency, Double amount) {
+    switch (Currency.valueOf(sourceCurrency)) {
+      case EUR:
+        return EUR_TO_UGX * amount;
+      case USD:
+        return USD_TO_UGX * amount;
+      case JPY:
+        return JPY_TO_UGX * amount;
+      case GBP:
+        return GBP_TO_UGX * amount;
+      default:
+        throw new AssessmentException(format("Cannot convert %s", sourceCurrency));
+    }
   }
 
   private CountryRequest buildCountryRequest(String country) {
@@ -296,5 +363,13 @@ public class CountriesNowPlacesService implements PlacesService {
   private CountryStateRequest buildCountryStateRequest(String country, String state) {
     state = state.equalsIgnoreCase("lagos state") ? state.split(" ")[0] : state;
     return CountryStateRequest.builder().country(country).state(state).build();
+  }
+
+  private Currency convertStringToCurrency(String currencyString) {
+    try {
+      return Currency.valueOf(currencyString);
+    } catch (IllegalArgumentException ex) {
+      throw new AssessmentException(format("currency %s not supported", currencyString), 400);
+    }
   }
 }

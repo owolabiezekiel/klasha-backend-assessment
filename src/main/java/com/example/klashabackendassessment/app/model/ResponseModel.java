@@ -1,4 +1,4 @@
-package com.example.klashabackendassessment.model;
+package com.example.klashabackendassessment.app.model;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
