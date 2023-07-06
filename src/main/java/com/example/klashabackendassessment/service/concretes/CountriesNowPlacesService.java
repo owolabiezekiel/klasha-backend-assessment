@@ -4,7 +4,6 @@ import static com.example.klashabackendassessment.utils.Constants.*;
 import static com.example.klashabackendassessment.utils.StringUtils.capitalizeFirstCharacter;
 import static java.lang.String.format;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
-import static org.springframework.http.HttpMethod.GET;
 import static org.springframework.http.HttpMethod.POST;
 
 import com.example.klashabackendassessment.app.enums.Currency;
@@ -44,29 +43,6 @@ import org.springframework.web.client.RestTemplate;
 public class CountriesNowPlacesService implements PlacesService {
   private final APIConfiguration apiConfiguration;
   private final RestTemplate restTemplate;
-
-  @Override
-  public CompletableFuture<List<CountryStateResponseData>> getAllCountryStatesAndCities() {
-    return supplyAsync(
-        () -> {
-          AllCountryAndStatesModel stateResponse;
-          HttpEntity<Void> all = new HttpEntity<>(null, setupRequestHeaders());
-          try {
-            log.info("Getting all states for country");
-            ResponseEntity<AllCountryAndStatesModel> response =
-                restTemplate.exchange(
-                    apiConfiguration.getStatesUrl(), GET, all, AllCountryAndStatesModel.class);
-            stateResponse = response.getBody();
-          } catch (HttpClientErrorException e) {
-            log.error("Error encountered: {}", e.getMessage());
-            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
-          } catch (HttpServerErrorException e) {
-            log.error("Error: encountered: {}", e.getMessage());
-            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
-          }
-          return stateResponse.getData();
-        });
-  }
 
   @Override
   public CompletableFuture<CountryDetailsResponseModel> getCountryDetails(String country) {
@@ -323,10 +299,10 @@ public class CountriesNowPlacesService implements PlacesService {
       CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
     } catch (HttpClientErrorException e) {
-      log.error("Error encountered: {}", e.getMessage());
+      log.error("Error encountered while getting state cities: {}", e.getMessage());
       throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
     } catch (HttpServerErrorException e) {
-      log.error("Error: encountered: {}", e.getMessage());
+      log.error("Error: encountered while getting state cities: {}", e.getMessage());
       throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
     }
 
@@ -336,7 +312,6 @@ public class CountriesNowPlacesService implements PlacesService {
   private CompletableFuture<CitiesResponseModel> getCities(String country, String state) {
     return supplyAsync(
         () -> {
-          log.info("Running on thread: {}", Thread.currentThread().getName());
           CitiesResponseModel citiesResponse;
           CountryStateRequest countryStateRequest = buildCountryStateRequest(country, state);
           HttpEntity<CountryStateRequest> requestEntity =
