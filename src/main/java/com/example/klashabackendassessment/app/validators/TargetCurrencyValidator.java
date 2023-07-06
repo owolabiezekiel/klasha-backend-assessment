@@ -15,6 +15,6 @@ public class TargetCurrencyValidator implements ConstraintValidator<ValidTargetC
       return false;
     }
     return value.toString().equalsIgnoreCase(NGN.toString())
-        || value.toString().equals(UGX.toString());
+        || value.toString().equalsIgnoreCase(UGX.toString());
   }
 }

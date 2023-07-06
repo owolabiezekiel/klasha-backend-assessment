@@ -6,14 +6,6 @@ import com.example.klashabackendassessment.model.response.countrycurrency.Countr
 import com.example.klashabackendassessment.model.response.countrycurrency.CountryCurrencyResponseModel;
 
 public class TestDataFixtures {
-  //  public static CountryRequest buildCountryRequest(String country){
-  //    return CountryRequest.builder().country(country).build();
-  //  }
-  //
-  //  public static CountryISO buildCountryIso(){
-  //    return CountryISO.builder().iso3("NGA").iso2("NG").build();
-  //  }
-
   public static CountryCurrencyResponseModel buildSupportedCurrencyModel() {
     return CountryCurrencyResponseModel.builder().data(buildSupportedCurrencyData()).build();
   }
@@ -29,35 +21,6 @@ public class TestDataFixtures {
   public static CountryCurrencyData buildSupportedCurrencyData() {
     return CountryCurrencyData.builder().currency("USD").build();
   }
-
-  //  public static CountryLocationData buildLocationData() {
-  //    return CountryLocationData.builder().latitude(1.5).latitude(1.2).build();
-  //  }
-  //
-  //  public static PopulationCount buildPopulationCount() {
-  //    return PopulationCount.builder().year("2019").value("200000").build();
-  //  }
-
-  //  public static CountryDetailsResponseModel buildCountryDetailsResponse(){
-  //    return CountryDetailsResponseModel.builder()
-  //        .country("Nigeria")
-  //        .iso(buildCountryIso())
-  //        .currency("NGN")
-  //        .location(buildLocationData())
-  //        .capitalCity("Lagos")
-  //        .population(buildPopulationCount())
-  //        .build();
-  //  }
-  //
-  //  public static CurrencyConvertResponse buildCurrencyConvertResponse(){
-  //    return CurrencyConvertResponse.builder()
-  //        .country("Nigeria")
-  //        .localCurrency(Currency.NGN)
-  //        .amount(200.0)
-  //        .targetCurrency(Currency.NGN)
-  //        .convertedAmountValue(3500.0)
-  //        .build();
-  //  }
 
   public static CurrencyConvertRequest buildCurrencyConvertRequest() {
     return CurrencyConvertRequest.builder()

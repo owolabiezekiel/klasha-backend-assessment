@@ -25,7 +25,7 @@ public class CurrencyConvertRequest {
   @Positive(message = "amount should not be negative")
   private Double amount;
 
-  @NotNull(message = "targetCurrency string should not be null")
+  @NotNull(message = "targetCurrency should not be null")
   @ValidTargetCurrency()
   private Currency targetCurrency;
 }
