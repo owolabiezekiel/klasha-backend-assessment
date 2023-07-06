@@ -6,11 +6,12 @@ import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
-@ConfigurationProperties(prefix = "klasha.cities")
+@ConfigurationProperties(prefix = "klasha.places")
 public class APIConfiguration {
   private String domain;
   private String baseUrl;
   private String statesUrl;
+  private String citiesUrl;
   private String populationUrl;
   private String capitalUrl;
   private String locationUrl;

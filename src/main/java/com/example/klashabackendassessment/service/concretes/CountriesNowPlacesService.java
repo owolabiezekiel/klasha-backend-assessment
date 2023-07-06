@@ -8,6 +8,7 @@ import static org.springframework.http.HttpMethod.POST;
 import com.example.klashabackendassessment.config.APIConfiguration;
 import com.example.klashabackendassessment.exceptions.AssessmentException;
 import com.example.klashabackendassessment.model.request.CountryRequest;
+import com.example.klashabackendassessment.model.request.CountryStateRequest;
 import com.example.klashabackendassessment.model.response.capital.CountryCapitalResponseData;
 import com.example.klashabackendassessment.model.response.capital.CountryCapitalResponseModel;
 import com.example.klashabackendassessment.model.response.countrycurrency.CountryCurrencyData;
@@ -18,15 +19,15 @@ import com.example.klashabackendassessment.model.response.countrylocation.Countr
 import com.example.klashabackendassessment.model.response.countrylocation.CountryLocationResponseModel;
 import com.example.klashabackendassessment.model.response.countrypopulation.CountryPopulationResponse;
 import com.example.klashabackendassessment.model.response.countrypopulation.PopulationCount;
-import com.example.klashabackendassessment.model.response.countrystates.AllCountryAndStatesModel;
-import com.example.klashabackendassessment.model.response.countrystates.CountryStateResponseData;
-import com.example.klashabackendassessment.model.response.countrystates.CountryStateResponseModel;
+import com.example.klashabackendassessment.model.response.countrystates.*;
 import com.example.klashabackendassessment.service.abstracts.PlacesService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
@@ -40,7 +41,7 @@ public class CountriesNowPlacesService implements PlacesService {
   private final RestTemplate restTemplate;
 
   @Override
-  public CompletableFuture<List<CountryStateResponseData>> getCountryStatesAndCities() {
+  public CompletableFuture<List<CountryStateResponseData>> getAllCountryStatesAndCities() {
     return supplyAsync(
         () -> {
           AllCountryAndStatesModel stateResponse;
@@ -74,6 +75,12 @@ public class CountriesNowPlacesService implements PlacesService {
                 .iso(getIso(country))
                 .country(capitalizeFirstCharacter(country))
                 .build());
+  }
+
+  @Override
+  @Async
+  public CompletableFuture<CountryStateResponseData> getCountryStateAndCities(String country) {
+    return supplyAsync(() -> getStateAndCities(country));
   }
 
   private CountryRequest buildCountryRequest(String country) {
@@ -215,5 +222,79 @@ public class CountriesNowPlacesService implements PlacesService {
         .iso2(countryStateResponse.getData().getIso2())
         .iso3(countryStateResponse.getData().getIso3())
         .build();
+  }
+
+  private CountryStateResponseData getStateAndCities(String country) {
+    CountryStateResponseData responseData;
+    CountryRequest countryRequest = buildCountryRequest(country);
+    HttpEntity<CountryRequest> countryRequestHttpEntity =
+        new HttpEntity<>(countryRequest, setupRequestHeaders());
+    try {
+      log.info("Getting states and cities of country: {}", country);
+      ResponseEntity<CountryStateResponseModel> response =
+          restTemplate.exchange(
+              apiConfiguration.getStatesUrl(),
+              POST,
+              countryRequestHttpEntity,
+              CountryStateResponseModel.class);
+      responseData = response.getBody().getData();
+
+      List<CompletableFuture<Void>> futures = new ArrayList<>();
+      for (StateModel state : responseData.getStates()) {
+        CompletableFuture<CitiesResponseModel> citiesFuture =
+            getCities(country, state.getName())
+                .thenApply(
+                    cities -> {
+                      state.setCities(cities.getData());
+                      return cities;
+                    });
+        CompletableFuture<Void> stateFuture = citiesFuture.thenAccept(data -> {});
+        futures.add(stateFuture);
+      }
+
+      CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+    } catch (HttpClientErrorException e) {
+      log.error("Error encountered: {}", e.getMessage());
+      throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+    } catch (HttpServerErrorException e) {
+      log.error("Error: encountered: {}", e.getMessage());
+      throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+    }
+
+    return responseData;
+  }
+
+  private CompletableFuture<CitiesResponseModel> getCities(String country, String state) {
+    return supplyAsync(
+        () -> {
+          log.info("Running on thread: {}", Thread.currentThread().getName());
+          CitiesResponseModel citiesResponse;
+          CountryStateRequest countryStateRequest = buildCountryStateRequest(country, state);
+          HttpEntity<CountryStateRequest> requestEntity =
+              new HttpEntity<>(countryStateRequest, setupRequestHeaders());
+          try {
+            log.info("Getting cities of state: {} of country: {}", state, country);
+            ResponseEntity<CitiesResponseModel> response =
+                restTemplate.exchange(
+                    apiConfiguration.getCitiesUrl(),
+                    POST,
+                    requestEntity,
+                    CitiesResponseModel.class);
+            citiesResponse = response.getBody();
+          } catch (HttpClientErrorException e) {
+            log.error("Error encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          } catch (HttpServerErrorException e) {
+            log.error("Error: encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          }
+          return citiesResponse;
+        });
+  }
+
+  private CountryStateRequest buildCountryStateRequest(String country, String state) {
+    state = state.equalsIgnoreCase("lagos state") ? state.split(" ")[0] : state;
+    return CountryStateRequest.builder().country(country).state(state).build();
   }
 }

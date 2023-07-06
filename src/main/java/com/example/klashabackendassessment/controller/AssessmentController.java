@@ -17,14 +17,20 @@ import org.springframework.web.bind.annotation.*;
 public class AssessmentController {
   private final PlacesService placesService;
 
-  @GetMapping()
+  @GetMapping(value = "/states-cities/all")
   public CompletableFuture<ResponseModel<List<CountryStateResponseData>>> getAllCountriesStates() {
-    return placesService.getCountryStatesAndCities().thenApply(ResponseModel::new);
+    return placesService.getAllCountryStatesAndCities().thenApply(ResponseModel::new);
   }
 
   @GetMapping(value = "/details")
   public CompletableFuture<ResponseModel<CountryDetailsResponseModel>> getCountryDetails(
       @RequestParam String country) {
     return placesService.getCountryDetails(country).thenApply(ResponseModel::new);
+  }
+
+  @GetMapping(value = "/states-cities")
+  public CompletableFuture<ResponseModel<CountryStateResponseData>> getCountryStatesAndCities(
+      @RequestParam String country) {
+    return placesService.getCountryStateAndCities(country).thenApply(ResponseModel::new);
   }
 }

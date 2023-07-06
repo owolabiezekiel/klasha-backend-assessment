@@ -1,6 +1,6 @@
 
 server:
-  port: ${SERVER_PORT:8081}
+  port: ${SERVER_PORT:8080}
 logging:
   level:
     root: INFO
@@ -12,12 +12,13 @@ logging:
     rollingpolicy:
       max-file-size: 60MB
 klasha:
-  cities:
+  places:
     domain: ${DOMAIN:https://countriesnow.space}
     base-url: ${BASE_URL:https://countriesnow.space/api/v0.1/countries}
-    states-url: ${STATES_URL:${klasha.cities.base-url}/states}
-    population-url: ${POPULATION_URL:${klasha.cities.base-url}/population}
-    capital-url: ${POPULATION_URL:${klasha.cities.base-url}/capital}
-    location-url: ${POPULATION_URL:${klasha.cities.base-url}/positions}
-    currency-url: ${POPULATION_URL:${klasha.cities.base-url}/currency}
+    states-url: ${STATES_URL:${klasha.places.base-url}/states}
+    cities-url: ${CITIES_URL:${klasha.places.base-url}/state/cities}
+    population-url: ${POPULATION_URL:${klasha.places.base-url}/population}
+    capital-url: ${POPULATION_URL:${klasha.places.base-url}/capital}
+    location-url: ${POPULATION_URL:${klasha.places.base-url}/positions}
+    currency-url: ${POPULATION_URL:${klasha.places.base-url}/currency}
 

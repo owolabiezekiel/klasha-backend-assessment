@@ -16,13 +16,14 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @ControllerAdvice
 @Slf4j
 public class RestControllerAdvice extends ResponseEntityExceptionHandler {
-  @ExceptionHandler(value = {Exception.class})
-  public ResponseEntity<ResponseModel> handleUploadException(Exception ex) {
-    log.error("Unhandled exception encountered: {}", ex.getMessage(), ex);
-    return new ResponseEntity<>(
-        new ResponseModel(null, "", singletonList(ex.getMessage()), INTERNAL_SERVER_ERROR.value()),
-        INTERNAL_SERVER_ERROR);
-  }
+  //  @ExceptionHandler(value = {Exception.class})
+  //  public ResponseEntity<ResponseModel> handleUploadException(Exception ex) {
+  //    log.error("Unhandled exception encountered: {}", ex.getMessage(), ex);
+  //    return new ResponseEntity<>(
+  //        new ResponseModel(null, "", singletonList(ex.getMessage()),
+  // INTERNAL_SERVER_ERROR.value()),
+  //        INTERNAL_SERVER_ERROR);
+  //  }
 
   @ExceptionHandler(value = {CompletionException.class})
   public ResponseEntity<ResponseModel> handleCompletionException(CompletionException ex) {

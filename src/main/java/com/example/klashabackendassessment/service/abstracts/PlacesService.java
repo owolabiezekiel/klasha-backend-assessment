@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface PlacesService {
-  CompletableFuture<List<CountryStateResponseData>> getCountryStatesAndCities();
+  CompletableFuture<List<CountryStateResponseData>> getAllCountryStatesAndCities();
 
   CompletableFuture<CountryDetailsResponseModel> getCountryDetails(String country);
+
+  CompletableFuture<CountryStateResponseData> getCountryStateAndCities(String country);
 }
