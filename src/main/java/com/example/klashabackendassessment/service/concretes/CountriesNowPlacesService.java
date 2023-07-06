@@ -115,13 +115,14 @@ public class CountriesNowPlacesService implements PlacesService {
         case UGX:
           return calculateExchangeToUGX(sourceCurrency, amount);
         default:
-          throw new AssessmentException(format("Invalid target currency - %s", targetCurrency));
+          throw new AssessmentException(
+              format("invalid target currency - %s", targetCurrency), 400);
       }
     }
   }
 
   private Double calculateExchangeToNGN(String sourceCurrency, Double amount) {
-    switch (Currency.valueOf(sourceCurrency)) {
+    switch (convertStringToCurrency(sourceCurrency)) {
       case EUR:
         return EUR_TO_NGN * amount;
       case USD:
@@ -136,7 +137,7 @@ public class CountriesNowPlacesService implements PlacesService {
   }
 
   private Double calculateExchangeToUGX(String sourceCurrency, Double amount) {
-    switch (Currency.valueOf(sourceCurrency)) {
+    switch (convertStringToCurrency(sourceCurrency)) {
       case EUR:
         return EUR_TO_UGX * amount;
       case USD:
