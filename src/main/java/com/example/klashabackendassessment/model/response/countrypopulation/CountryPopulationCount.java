@@ -1,6 +1,5 @@
 package com.example.klashabackendassessment.model.response.countrypopulation;
 
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -10,6 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CountryPopulationResponseData {
-  private List<CountryPopulationCount> populationCounts;
+public class CountryPopulationCount {
+  private String year;
+  private String value;
 }

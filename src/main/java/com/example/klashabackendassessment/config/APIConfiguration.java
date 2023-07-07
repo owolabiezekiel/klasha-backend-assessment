@@ -11,9 +11,11 @@ public class APIConfiguration {
   private String domain;
   private String baseUrl;
   private String statesUrl;
-  private String citiesUrl;
+  private String stateCitiesUrl;
   private String populationUrl;
   private String capitalUrl;
   private String locationUrl;
   private String currencyUrl;
+  private String countryCitiesUrl;
+  private String cityPopulationUrl;
 }

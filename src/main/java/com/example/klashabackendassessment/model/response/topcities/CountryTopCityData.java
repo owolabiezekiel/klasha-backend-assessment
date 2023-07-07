@@ -1,4 +1,4 @@
-package com.example.klashabackendassessment.model.response.countrypopulation;
+package com.example.klashabackendassessment.model.response.topcities;
 
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CountryPopulationResponseData {
-  private List<CountryPopulationCount> populationCounts;
+public class CountryTopCityData {
+  private String country;
+  private List<CityPopulationDetails> topCities;
 }

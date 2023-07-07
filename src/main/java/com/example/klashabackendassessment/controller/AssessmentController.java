@@ -7,10 +7,12 @@ import com.example.klashabackendassessment.model.request.CurrencyConvertRequest;
 import com.example.klashabackendassessment.model.response.countrydetails.CountryDetailsResponseModel;
 import com.example.klashabackendassessment.model.response.countrystates.CountryStateResponseData;
 import com.example.klashabackendassessment.model.response.currencyconvert.CurrencyConvertResponse;
+import com.example.klashabackendassessment.model.response.topcities.CountryTopCityData;
 import com.example.klashabackendassessment.service.abstracts.PlacesService;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 import io.swagger.v3.oas.annotations.Operation;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import javax.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +23,16 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping(value = "/country", produces = APPLICATION_JSON_VALUE)
 public class AssessmentController {
   private final PlacesService placesService;
+
+  @GetMapping(value = "/top")
+  @Operation(description = "Get top cities by population for Italy, Ghana, and NewZealand.")
+  @ApiResponses({
+    @ApiResponse(code = 200, message = "Success",responseContainer = "List", response = CountryTopCityData.class)
+  })
+  public CompletableFuture<ResponseModel<List<CountryTopCityData>>> getTopCities(
+      @Valid @RequestParam Integer size) {
+    return placesService.getHighestPopulatedCities(size).thenApply(ResponseModel::new);
+  }
 
   @GetMapping(value = "/details")
   @Operation(

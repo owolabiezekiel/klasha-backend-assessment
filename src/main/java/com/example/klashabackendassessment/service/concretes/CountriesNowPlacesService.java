@@ -9,6 +9,7 @@ import static org.springframework.http.HttpMethod.POST;
 import com.example.klashabackendassessment.app.enums.Currency;
 import com.example.klashabackendassessment.config.APIConfiguration;
 import com.example.klashabackendassessment.exceptions.AssessmentException;
+import com.example.klashabackendassessment.model.request.CityRequest;
 import com.example.klashabackendassessment.model.request.CountryRequest;
 import com.example.klashabackendassessment.model.request.CountryStateRequest;
 import com.example.klashabackendassessment.model.request.CurrencyConvertRequest;
@@ -20,10 +21,14 @@ import com.example.klashabackendassessment.model.response.countrydetails.Country
 import com.example.klashabackendassessment.model.response.countrydetails.CountryISO;
 import com.example.klashabackendassessment.model.response.countrylocation.CountryLocationData;
 import com.example.klashabackendassessment.model.response.countrylocation.CountryLocationResponseModel;
+import com.example.klashabackendassessment.model.response.countrypopulation.CountryPopulationCount;
 import com.example.klashabackendassessment.model.response.countrypopulation.CountryPopulationResponse;
-import com.example.klashabackendassessment.model.response.countrypopulation.PopulationCount;
 import com.example.klashabackendassessment.model.response.countrystates.*;
 import com.example.klashabackendassessment.model.response.currencyconvert.CurrencyConvertResponse;
+import com.example.klashabackendassessment.model.response.topcities.CityPopulationData;
+import com.example.klashabackendassessment.model.response.topcities.CityPopulationDetails;
+import com.example.klashabackendassessment.model.response.topcities.CityPopulationResponse;
+import com.example.klashabackendassessment.model.response.topcities.CountryTopCityData;
 import com.example.klashabackendassessment.service.abstracts.PlacesService;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,6 +48,111 @@ import org.springframework.web.client.RestTemplate;
 public class CountriesNowPlacesService implements PlacesService {
   private final APIConfiguration apiConfiguration;
   private final RestTemplate restTemplate;
+
+  @Override
+  public CompletableFuture<List<CountryTopCityData>> getHighestPopulatedCities(Integer size) {
+    return supplyAsync(
+        () -> {
+          List<CountryTopCityData> topCitiesData = buildCountries();
+          List<CompletableFuture<Void>> futures = new ArrayList<>();
+
+          for (CountryTopCityData ccd : topCitiesData) {
+            CompletableFuture<CountryTopCityData> cityDataFuture =
+                getTopCities(ccd)
+                    .thenApply(
+                        countryCityData -> {
+                          ccd.setTopCities(countryCityData.getTopCities());
+                          return countryCityData;
+                        });
+            CompletableFuture<Void> stateFuture = cityDataFuture.thenAccept(data -> {});
+            futures.add(stateFuture);
+          }
+          CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+          return topCitiesData;
+        });
+  }
+
+  private CompletableFuture<CountryTopCityData> getTopCities(
+      CountryTopCityData countryTopCityData) {
+    return supplyAsync(
+        () -> {
+          List<String> countryCities =
+              getCountryCities(countryTopCityData.getCountry()).join().getData();
+          List<CompletableFuture<Void>> futures = new ArrayList<>();
+          for (String city : countryCities) {
+            CompletableFuture<CityPopulationData> cityPopulationDataFuture =
+                getCityPopulation(city)
+                    .thenApply(
+                        cityPopulation -> {
+                          CityPopulationDetails cityPopulationData =
+                              CityPopulationDetails.builder()
+                                  .city(city)
+                                  .populationCount(cityPopulation.getPopulationCounts().get(0))
+                                  .build();
+                          countryTopCityData.getTopCities().add(cityPopulationData);
+                          return cityPopulation;
+                        });
+            CompletableFuture<Void> stateFuture = cityPopulationDataFuture.thenAccept(data -> {});
+            futures.add(stateFuture);
+          }
+          CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+          return countryTopCityData;
+        });
+  }
+
+  private CompletableFuture<CityPopulationData> getCityPopulation(String city) {
+    return supplyAsync(
+        () -> {
+          CityPopulationResponse cityPopulationResponse;
+          CityRequest cityRequest = buildCityRequest(city);
+          HttpEntity<CityRequest> requestEntity =
+              new HttpEntity<>(cityRequest, setupRequestHeaders());
+          try {
+            log.info("Getting population details for city: {}", city);
+            ResponseEntity<CityPopulationResponse> response =
+                restTemplate.exchange(
+                    apiConfiguration.getCityPopulationUrl(),
+                    POST,
+                    requestEntity,
+                    CityPopulationResponse.class);
+            cityPopulationResponse = response.getBody();
+          } catch (HttpClientErrorException e) {
+            log.error("Error encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          } catch (HttpServerErrorException e) {
+            log.error("Error: encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          }
+          return cityPopulationResponse.getData();
+        });
+  }
+
+  private CompletableFuture<CitiesResponseModel> getCountryCities(String country) {
+    return supplyAsync(
+        () -> {
+          CitiesResponseModel citiesResponse;
+          CountryRequest countryCityRequest = buildCountryRequest(country);
+          HttpEntity<CountryRequest> requestEntity =
+              new HttpEntity<>(countryCityRequest, setupRequestHeaders());
+          try {
+            log.info("Getting cities of country: {}", country);
+            ResponseEntity<CitiesResponseModel> response =
+                restTemplate.exchange(
+                    apiConfiguration.getCountryCitiesUrl(),
+                    POST,
+                    requestEntity,
+                    CitiesResponseModel.class);
+            citiesResponse = response.getBody();
+          } catch (HttpClientErrorException e) {
+            log.error("Error encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          } catch (HttpServerErrorException e) {
+            log.error("Error: encountered: {}", e.getMessage());
+            throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
+          }
+          return citiesResponse;
+        });
+  }
 
   @Override
   public CompletableFuture<CountryDetailsResponseModel> getCountryDetails(String country) {
@@ -131,13 +241,17 @@ public class CountriesNowPlacesService implements PlacesService {
     return CountryRequest.builder().country(country).build();
   }
 
+  private CityRequest buildCityRequest(String city) {
+    return CityRequest.builder().city(city).build();
+  }
+
   private HttpHeaders setupRequestHeaders() {
     HttpHeaders headers = new HttpHeaders();
     headers.put("Content-Type", List.of("application/json"));
     return headers;
   }
 
-  private PopulationCount getCountryPopulation(String country) {
+  private CountryPopulationCount getCountryPopulation(String country) {
     CountryPopulationResponse countryPopulationResponse;
     CountryRequest countryRequest = buildCountryRequest(country);
     HttpEntity<CountryRequest> countryRequestHttpEntity =
@@ -159,7 +273,7 @@ public class CountriesNowPlacesService implements PlacesService {
       throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
     }
 
-    List<PopulationCount> populationCounts =
+    List<CountryPopulationCount> populationCounts =
         countryPopulationResponse.getData().getPopulationCounts();
     int populationCountSize = populationCounts.size();
     return populationCounts.get(populationCountSize - 1);
@@ -286,7 +400,7 @@ public class CountriesNowPlacesService implements PlacesService {
       List<CompletableFuture<Void>> futures = new ArrayList<>();
       for (StateModel state : responseData.getStates()) {
         CompletableFuture<CitiesResponseModel> citiesFuture =
-            getCities(country, state.getName())
+            getStateCities(country, state.getName())
                 .thenApply(
                     cities -> {
                       state.setCities(cities.getData());
@@ -309,7 +423,7 @@ public class CountriesNowPlacesService implements PlacesService {
     return responseData;
   }
 
-  private CompletableFuture<CitiesResponseModel> getCities(String country, String state) {
+  private CompletableFuture<CitiesResponseModel> getStateCities(String country, String state) {
     return supplyAsync(
         () -> {
           CitiesResponseModel citiesResponse;
@@ -320,7 +434,7 @@ public class CountriesNowPlacesService implements PlacesService {
             log.info("Getting cities of state: {} of country: {}", state, country);
             ResponseEntity<CitiesResponseModel> response =
                 restTemplate.exchange(
-                    apiConfiguration.getCitiesUrl(),
+                    apiConfiguration.getStateCitiesUrl(),
                     POST,
                     requestEntity,
                     CitiesResponseModel.class);
@@ -347,5 +461,15 @@ public class CountriesNowPlacesService implements PlacesService {
     } catch (IllegalArgumentException ex) {
       throw new AssessmentException(format("currency %s not supported", currencyString), 400);
     }
+  }
+
+  private List<CountryTopCityData> buildCountries() {
+    CountryTopCityData ghana =
+        CountryTopCityData.builder().country("Ghana").topCities(new ArrayList<>()).build();
+    CountryTopCityData italy =
+        CountryTopCityData.builder().country("Italy").topCities(new ArrayList<>()).build();
+    CountryTopCityData newZealand =
+        CountryTopCityData.builder().country("New Zealand").topCities(new ArrayList<>()).build();
+    return new ArrayList<>(List.of(ghana, italy, newZealand));
   }
 }

@@ -1,4 +1,4 @@
-package com.example.klashabackendassessment.model.response.countrypopulation;
+package com.example.klashabackendassessment.model.response.topcities;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class PopulationCount {
+public class CityPopulationCount {
   private String year;
   private String value;
+  private String sex;
+  private String reliability;
 }

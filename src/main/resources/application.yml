@@ -16,9 +16,11 @@ klasha:
     domain: ${DOMAIN:https://countriesnow.space}
     base-url: ${BASE_URL:https://countriesnow.space/api/v0.1/countries}
     states-url: ${STATES_URL:${klasha.places.base-url}/states}
-    cities-url: ${CITIES_URL:${klasha.places.base-url}/state/cities}
+    state-cities-url: ${CITIES_URL:${klasha.places.base-url}/state/cities}
     population-url: ${POPULATION_URL:${klasha.places.base-url}/population}
     capital-url: ${POPULATION_URL:${klasha.places.base-url}/capital}
     location-url: ${POPULATION_URL:${klasha.places.base-url}/positions}
     currency-url: ${POPULATION_URL:${klasha.places.base-url}/currency}
+    country-cities-url: ${STATES_URL:${klasha.places.base-url}/cities}
+    city-population-url: ${CITY_POPULATION_URL:${klasha.places.population-url}/cities}
 

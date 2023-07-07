@@ -1,7 +1,7 @@
 package com.example.klashabackendassessment.model.response.countrydetails;
 
 import com.example.klashabackendassessment.model.response.countrylocation.CountryLocationData;
-import com.example.klashabackendassessment.model.response.countrypopulation.PopulationCount;
+import com.example.klashabackendassessment.model.response.countrypopulation.CountryPopulationCount;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class CountryDetailsResponseModel {
   private String country;
-  private PopulationCount population;
+  private CountryPopulationCount population;
   private String capitalCity;
   private CountryLocationData location;
   private String currency;
