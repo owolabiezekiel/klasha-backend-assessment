@@ -72,6 +72,43 @@ public class CountriesNowPlacesService implements PlacesService {
         });
   }
 
+  @Override
+  public CompletableFuture<CountryDetailsResponseModel> getCountryDetails(String country) {
+    return supplyAsync(
+        () ->
+            CountryDetailsResponseModel.builder()
+                .population(getCountryPopulation(country))
+                .capitalCity(getCountryCapital(country).getCapital())
+                .location(getCountryLocation(country))
+                .currency(getCountryCurrency(country).getCurrency())
+                .iso(getIso(country))
+                .country(capitalizeFirstCharacter(country))
+                .build());
+  }
+
+  @Override
+  @Async
+  public CompletableFuture<CountryStateResponseData> getCountryStateAndCities(String country) {
+    return supplyAsync(() -> getStateAndCities(country));
+  }
+
+  @Override
+  public CompletableFuture<CurrencyConvertResponse> convertMoneyToTargetCurrency(
+      CurrencyConvertRequest request) {
+    return supplyAsync(
+        () -> {
+          String countryCurrency = getCountryCurrency(request.getCountry()).getCurrency();
+          return CurrencyConvertResponse.builder()
+              .country(request.getCountry())
+              .localCurrency(convertStringToCurrency(countryCurrency))
+              .amount(request.getAmount())
+              .targetCurrency(request.getTargetCurrency())
+              .convertedAmountValue(
+                  convertMoney(request.getAmount(), countryCurrency, request.getTargetCurrency()))
+              .build();
+        });
+  }
+
   private CompletableFuture<CountryTopCityData> getTopCities(
       CountryTopCityData countryTopCityData) {
     return supplyAsync(
@@ -151,43 +188,6 @@ public class CountriesNowPlacesService implements PlacesService {
             throw new AssessmentException(e.getMessage(), e.getStatusCode().value());
           }
           return citiesResponse;
-        });
-  }
-
-  @Override
-  public CompletableFuture<CountryDetailsResponseModel> getCountryDetails(String country) {
-    return supplyAsync(
-        () ->
-            CountryDetailsResponseModel.builder()
-                .population(getCountryPopulation(country))
-                .capitalCity(getCountryCapital(country).getCapital())
-                .location(getCountryLocation(country))
-                .currency(getCountryCurrency(country).getCurrency())
-                .iso(getIso(country))
-                .country(capitalizeFirstCharacter(country))
-                .build());
-  }
-
-  @Override
-  @Async
-  public CompletableFuture<CountryStateResponseData> getCountryStateAndCities(String country) {
-    return supplyAsync(() -> getStateAndCities(country));
-  }
-
-  @Override
-  public CompletableFuture<CurrencyConvertResponse> convertMoneyToTargetCurrency(
-      CurrencyConvertRequest request) {
-    return supplyAsync(
-        () -> {
-          String countryCurrency = getCountryCurrency(request.getCountry()).getCurrency();
-          return CurrencyConvertResponse.builder()
-              .country(request.getCountry())
-              .localCurrency(convertStringToCurrency(countryCurrency))
-              .amount(request.getAmount())
-              .targetCurrency(request.getTargetCurrency())
-              .convertedAmountValue(
-                  convertMoney(request.getAmount(), countryCurrency, request.getTargetCurrency()))
-              .build();
         });
   }
 
