@@ -27,7 +27,11 @@ public class AssessmentController {
   @GetMapping(value = "/top")
   @Operation(description = "Get top cities by population for Italy, Ghana, and NewZealand.")
   @ApiResponses({
-    @ApiResponse(code = 200, message = "Success",responseContainer = "List", response = CountryTopCityData.class)
+    @ApiResponse(
+        code = 200,
+        message = "Success",
+        responseContainer = "List",
+        response = CountryTopCityData.class)
   })
   public CompletableFuture<ResponseModel<List<CountryTopCityData>>> getTopCities(
       @Valid @RequestParam Integer size) {
