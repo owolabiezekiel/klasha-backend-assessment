@@ -11,6 +11,9 @@ logging:
   logback:
     rollingpolicy:
       max-file-size: 60MB
+java:
+  runtime:
+    version: 11
 klasha:
   places:
     domain: ${DOMAIN:https://countriesnow.space}
